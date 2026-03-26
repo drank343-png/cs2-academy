@@ -24,7 +24,7 @@
 <div class="container">
     <section class="hero fade-in">
         <h1>📊 Прогресс тренировок</h1>
-        <p>Смотри уровень, статы и историю тренировок</p>
+        <p>Смотри уровень, проценты и историю тренировок</p>
     </section>
 
     <div class="two-column">
@@ -37,24 +37,13 @@
             <div class="xp-track">
                 <div class="xp-fill" data-role="xpBar"></div>
             </div>
+            <p id="rankText">Rank: Silver</p>
         </div>
 
-        <div class="mission-box fade-in">
-            <h3>📋 Daily Mission</h3>
-            <div class="mission-list" id="dailyMissionList"></div>
-        </div>
-    </div>
-
-    <div class="two-column">
         <div class="streak-box fade-in">
             <h3>🔥 Стрик</h3>
             <div class="streak-value" id="streakValue">🔥 Стрик: 0 дн.</div>
             <p class="small-text">Серия дней подряд.</p>
-        </div>
-
-        <div class="achievements-box fade-in">
-            <h3>🏆 Достижения</h3>
-            <div class="achievements-list" id="achievementsList"></div>
         </div>
     </div>
 
@@ -99,26 +88,19 @@
         </div>
     </div>
 
-    <div class="faceit-box fade-in">
-        <h3>🎮 Mini Faceit Tracker</h3>
-        <div class="faceit-grid">
-            <div class="faceit-card">
-                <h4>ELO</h4>
-                <div class="faceit-value" id="faceitElo">840</div>
-            </div>
-            <div class="faceit-card">
-                <h4>Матчи</h4>
-                <div class="faceit-value" id="faceitMatches">12</div>
-            </div>
-            <div class="faceit-card">
-                <h4>Winrate</h4>
-                <div class="faceit-value" id="faceitWinrate">54%</div>
-            </div>
-            <div class="faceit-card">
-                <h4>K/D</h4>
-                <div class="faceit-value" id="faceitKd">1.08</div>
-            </div>
-        </div>
+    <div class="info-box fade-in">
+        <h3>📌 Анализ игрока</h3>
+        <p id="playerAnalysis">Загрузка анализа...</p>
+    </div>
+
+    <div class="mission-box fade-in">
+        <h3>📋 Daily Mission</h3>
+        <div class="mission-list" id="dailyMissionList"></div>
+    </div>
+
+    <div class="achievements-box fade-in">
+        <h3>🏆 Достижения</h3>
+        <div class="achievements-list" id="achievementsList"></div>
     </div>
 
     <div class="progress-list" id="savedProgressList"></div>
