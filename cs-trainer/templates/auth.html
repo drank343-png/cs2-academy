@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Авторизация</title>
+    <title>Аккаунт</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -22,33 +22,39 @@
 </header>
 
 <div class="container">
-    <section class="hero">
+    <section class="hero fade-in">
         <h1>🔐 Аккаунт</h1>
-        <p>Войди или зарегистрируйся, чтобы прогресс сохранялся на сервере</p>
+        <p>Регистрация и вход</p>
     </section>
 
     <div class="two-column">
-        <div class="profile-box">
+        <div class="profile-box fade-in">
             <h3>Регистрация</h3>
-            <input class="profile-input" id="registerUsername" placeholder="Логин">
-            <input class="profile-input" id="registerPassword" placeholder="Пароль" type="password">
+            <input class="profile-input" id="registerUsername" placeholder="Логин (англ. буквы, цифры, _ .)">
+            <input class="profile-input" id="registerPassword" type="password" placeholder="Пароль (мин. 8 символов)">
             <button class="btn" onclick="registerAccount()">Зарегистрироваться</button>
         </div>
 
-        <div class="profile-box">
+        <div class="profile-box fade-in">
             <h3>Вход</h3>
             <input class="profile-input" id="loginUsername" placeholder="Логин">
-            <input class="profile-input" id="loginPassword" placeholder="Пароль" type="password">
+            <input class="profile-input" id="loginPassword" type="password" placeholder="Пароль">
             <button class="btn" onclick="loginAccount()">Войти</button>
             <button class="btn" onclick="logoutAccount()">Выйти</button>
         </div>
     </div>
 
-    <div class="info-box">
+    <div class="info-box fade-in">
         <h3>Статус</h3>
         <p id="authStatus">Проверка...</p>
+        <p class="small-text">
+            Логин: 3–20 символов, только английские буквы, цифры, _ и .<br>
+            Пароль: минимум 8 символов, хотя бы 1 буква и 1 цифра.
+        </p>
     </div>
 </div>
+
+<footer>CS2 Academy PRO</footer>
 
 <script src="{{ url_for('static', filename='config.js') }}"></script>
 <script src="{{ url_for('static', filename='script.js') }}"></script>
