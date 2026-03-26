@@ -148,7 +148,34 @@
     <source src="{{ url_for('static', filename='music.mp3') }}" type="audio/mpeg">
 </audio>
 <button id="musicToggle" class="music-btn">🔇 Без звука</button>
+<div class="donate-box fade-in">
+    <h3>💰 Поддержать разработчика</h3>
 
+    <p>
+        Нравится сайт? Поддержи развитие проекта ❤️  
+    </p>
+
+    <div class="card-ui">
+
+        <div class="card-visual">
+            <div class="card-chip"></div>
+
+            <div class="card-number" id="kaspiCard">
+                4400 4300 1889 0449
+            </div>
+
+            <div class="card-bottom">
+                <span>CS2 ACADEMY</span>
+                <span>KASPI</span>
+            </div>
+        </div>
+
+        <button class="btn donate-btn" onclick="copyCard()">
+            💳 Скопировать карту
+        </button>
+
+    </div>
+</div>
 <footer>CS2 Academy PRO</footer>
 
 <script src="{{ url_for('static', filename='config.js') }}"></script>
