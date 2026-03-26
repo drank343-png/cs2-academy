@@ -504,3 +504,45 @@ footer {
         grid-template-columns: 1fr;
     }
 }
+.card-ui {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.card-visual {
+    background: linear-gradient(135deg, #00ff88, #00c853);
+    border-radius: 18px;
+    padding: 20px;
+    color: black;
+    max-width: 320px;
+    margin: 0 auto 15px;
+    box-shadow: 0 0 25px rgba(0,255,120,0.4);
+    position: relative;
+}
+
+.card-chip {
+    width: 40px;
+    height: 28px;
+    background: gold;
+    border-radius: 6px;
+    margin-bottom: 15px;
+}
+
+.card-number {
+    font-size: 20px;
+    letter-spacing: 2px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.card-bottom {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.donate-btn {
+    width: 100%;
+    max-width: 320px;
+}
