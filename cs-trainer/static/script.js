@@ -863,3 +863,10 @@ setInterval(() => {
 document.addEventListener("DOMContentLoaded", () => {
     loadCloudProgress();
 });
+function copyCard() {
+    const card = document.getElementById("kaspiCard").textContent.trim();
+
+    navigator.clipboard.writeText(card)
+        .then(() => alert("Карта скопирована 💳"))
+        .catch(() => alert("Ошибка копирования"));
+}
