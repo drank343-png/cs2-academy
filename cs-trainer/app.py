@@ -1,13 +1,15 @@
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify, session
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 import json
+import re
 import os
 
 app = Flask(__name__)
-app.secret_key = "change-this-secret-key-please"
+app.secret_key = "cs2-academy-secret-change-this"
 
-DB_PATH = "database.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "database.db")
 
 
 def get_db():
@@ -24,7 +26,8 @@ def init_db():
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL
+        password_hash TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)
 
@@ -43,18 +46,23 @@ def init_db():
 def default_progress():
     return {
         "xp": 0,
-        "completedMissions": [],
-        "progressHistory": [],
         "nickname": "Faceit Player",
-        "stats": {"aim": 62, "macro": 48, "sense": 55},
-        "faceit": {"elo": 840, "matches": 12, "winrate": 54, "kd": 1.08},
         "theme": "green",
         "music": "off",
+        "completedMissions": [],
+        "progressHistory": [],
         "achievements": [],
         "mapViews": 0,
         "streak": 0,
         "lastTrainingDate": "",
-        "aiChat": []
+        "aiChat": [],
+        "activity": {
+            "aim_completed": 0,
+            "macro_completed": 0,
+            "sense_completed": 0,
+            "map_views": 0,
+            "tips_used": 0
+        }
     }
 
 
@@ -92,7 +100,7 @@ def save_user_progress(user_id: int, progress: dict):
 
 
 @app.before_request
-def setup():
+def before_request():
     init_db()
 
 
@@ -117,40 +125,61 @@ def progress():
 
 
 @app.route("/auth")
-def auth_page():
+def auth():
     return render_template("auth.html")
 
 
 @app.route("/api/register", methods=["POST"])
 def api_register():
     data = request.get_json(force=True)
+
     username = (data.get("username") or "").strip()
     password = (data.get("password") or "").strip()
 
-    if len(username) < 3:
-        return jsonify({"ok": False, "error": "Логин должен быть минимум 3 символа"}), 400
+    # ЛОГИН: только английские буквы, цифры, _ .
+    if not re.fullmatch(r"[A-Za-z0-9_.]{3,20}", username):
+        return jsonify({
+            "ok": False,
+            "error": "Логин: 3-20 символов, только английские буквы, цифры, _ и ."
+        }), 400
 
-    if len(password) < 4:
-        return jsonify({"ok": False, "error": "Пароль должен быть минимум 4 символа"}), 400
+    # ПАРОЛЬ: минимум 8 символов, хотя бы 1 буква и 1 цифра
+    if len(password) < 8:
+        return jsonify({"ok": False, "error": "Пароль минимум 8 символов"}), 400
+
+    if not re.search(r"[A-Za-z]", password):
+        return jsonify({"ok": False, "error": "В пароле должна быть хотя бы 1 английская буква"}), 400
+
+    if not re.search(r"\d", password):
+        return jsonify({"ok": False, "error": "В пароле должна быть хотя бы 1 цифра"}), 400
+
+    # Русские символы в пароле запрещаем
+    if re.search(r"[А-Яа-яЁё]", password):
+        return jsonify({"ok": False, "error": "Пароль только на английской раскладке"}), 400
 
     conn = get_db()
     cur = conn.cursor()
 
     cur.execute("SELECT id FROM users WHERE username = ?", (username,))
-    if cur.fetchone():
+    exists = cur.fetchone()
+
+    if exists:
         conn.close()
-        return jsonify({"ok": False, "error": "Такой логин уже существует"}), 400
+        return jsonify({"ok": False, "error": "Такой логин уже занят"}), 400
 
     password_hash = generate_password_hash(password)
+
     cur.execute(
         "INSERT INTO users (username, password_hash) VALUES (?, ?)",
         (username, password_hash)
     )
     user_id = cur.lastrowid
+
     cur.execute(
         "INSERT INTO user_progress (user_id, progress_json) VALUES (?, ?)",
         (user_id, json.dumps(default_progress(), ensure_ascii=False))
     )
+
     conn.commit()
     conn.close()
 
@@ -163,6 +192,7 @@ def api_register():
 @app.route("/api/login", methods=["POST"])
 def api_login():
     data = request.get_json(force=True)
+
     username = (data.get("username") or "").strip()
     password = (data.get("password") or "").strip()
 
@@ -172,8 +202,11 @@ def api_login():
     user = cur.fetchone()
     conn.close()
 
-    if not user or not check_password_hash(user["password_hash"], password):
-        return jsonify({"ok": False, "error": "Неверный логин или пароль"}), 401
+    if not user:
+        return jsonify({"ok": False, "error": "Пользователь не найден"}), 404
+
+    if not check_password_hash(user["password_hash"], password):
+        return jsonify({"ok": False, "error": "Неверный пароль"}), 401
 
     session["user_id"] = user["id"]
     session["username"] = user["username"]
@@ -187,13 +220,11 @@ def api_logout():
     return jsonify({"ok": True})
 
 
-@app.route("/api/me")
+@app.route("/api/me", methods=["GET"])
 def api_me():
-    user_id = session.get("user_id")
-    username = session.get("username")
     return jsonify({
-        "logged_in": bool(user_id),
-        "username": username
+        "logged_in": bool(session.get("user_id")),
+        "username": session.get("username")
     })
 
 
@@ -224,4 +255,5 @@ def api_save_progress():
 
 
 if __name__ == "__main__":
+    init_db()
     app.run(debug=True)
