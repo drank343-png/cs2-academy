@@ -5,18 +5,17 @@ let isPaused = false;
 
 const STORAGE_KEYS = {
     xp: "cs2_xp",
-    completedMissions: "cs2_completed_missions",
-    progressHistory: "cs2_progress_history",
     nickname: "cs2_nickname",
-    stats: "cs2_stats",
-    faceit: "cs2_faceit",
     theme: "cs2_theme",
     music: "cs2_music",
+    completedMissions: "cs2_completed_missions",
+    progressHistory: "cs2_progress_history",
     achievements: "cs2_achievements",
     mapViews: "cs2_map_views",
     streak: "cs2_streak",
     lastTrainingDate: "cs2_last_training_date",
-    aiChat: "cs2_ai_chat"
+    aiChat: "cs2_ai_chat",
+    activity: "cs2_activity"
 };
 
 function qs(id) {
@@ -24,7 +23,37 @@ function qs(id) {
 }
 
 /* =========================
-   XP / LEVEL
+   DEFAULT DATA
+========================= */
+function defaultActivity() {
+    return {
+        aim_completed: 0,
+        macro_completed: 0,
+        sense_completed: 0,
+        map_views: 0,
+        tips_used: 0
+    };
+}
+
+function defaultProgress() {
+    return {
+        xp: 0,
+        nickname: "Faceit Player",
+        theme: "green",
+        music: "off",
+        completedMissions: [],
+        progressHistory: [],
+        achievements: [],
+        mapViews: 0,
+        streak: 0,
+        lastTrainingDate: "",
+        aiChat: [],
+        activity: defaultActivity()
+    };
+}
+
+/* =========================
+   LOCAL GET / SET
 ========================= */
 function getXP() {
     return Number(localStorage.getItem(STORAGE_KEYS.xp)) || 0;
@@ -34,13 +63,60 @@ function setXP(value) {
     localStorage.setItem(STORAGE_KEYS.xp, value);
     updateXPUI();
     updateRank();
-    checkAchievements();
 }
 
 function addXP(amount) {
     setXP(getXP() + amount);
 }
 
+function getNickname() {
+    return localStorage.getItem(STORAGE_KEYS.nickname) || "Faceit Player";
+}
+
+function saveNickname() {
+    const input = qs("nicknameInput");
+    if (!input) return;
+    localStorage.setItem(STORAGE_KEYS.nickname, input.value.trim() || "Faceit Player");
+    renderNickname();
+    saveCloudProgress();
+}
+
+function renderNickname() {
+    const value = getNickname();
+    if (qs("nicknameValue")) qs("nicknameValue").textContent = value;
+    if (qs("nicknameInput")) qs("nicknameInput").value = value;
+}
+
+function getCompletedMissions() {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.completedMissions) || "[]");
+}
+
+function setCompletedMissions(arr) {
+    localStorage.setItem(STORAGE_KEYS.completedMissions, JSON.stringify(arr));
+}
+
+function getAchievements() {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.achievements) || "[]");
+}
+
+function setAchievements(arr) {
+    localStorage.setItem(STORAGE_KEYS.achievements, JSON.stringify(arr));
+    renderAchievements();
+}
+
+function getActivity() {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.activity) || JSON.stringify(defaultActivity()));
+}
+
+function setActivity(data) {
+    localStorage.setItem(STORAGE_KEYS.activity, JSON.stringify(data));
+    updateSkillPercentages();
+    renderPlayerAnalysis();
+}
+
+/* =========================
+   XP / LEVEL
+========================= */
 function getLevelFromXP(xp) {
     return Math.floor(xp / 100) + 1;
 }
@@ -54,13 +130,17 @@ function updateXPUI() {
     const level = getLevelFromXP(xp);
     const currentXP = getXPInCurrentLevel(xp);
 
-    const levelElements = document.querySelectorAll('[data-role="levelValue"]');
-    const xpTextElements = document.querySelectorAll('[data-role="xpText"]');
-    const xpBarElements = document.querySelectorAll('[data-role="xpBar"]');
+    document.querySelectorAll('[data-role="levelValue"]').forEach(el => {
+        el.textContent = `Level ${level}`;
+    });
 
-    levelElements.forEach(el => el.textContent = `Level ${level}`);
-    xpTextElements.forEach(el => el.textContent = `${currentXP}/100 XP`);
-    xpBarElements.forEach(el => el.style.width = `${currentXP}%`);
+    document.querySelectorAll('[data-role="xpText"]').forEach(el => {
+        el.textContent = `${currentXP}/100 XP`;
+    });
+
+    document.querySelectorAll('[data-role="xpBar"]').forEach(el => {
+        el.style.width = `${currentXP}%`;
+    });
 }
 
 /* =========================
@@ -74,9 +154,9 @@ function getRank(xp) {
 }
 
 function updateRank() {
-    const rankEl = qs("rankText");
-    if (!rankEl) return;
-    rankEl.textContent = `Rank: ${getRank(getXP())}`;
+    const el = qs("rankText");
+    if (!el) return;
+    el.textContent = `Rank: ${getRank(getXP())}`;
 }
 
 /* =========================
@@ -100,6 +180,7 @@ function startTimer(seconds, taskName) {
     if (qs("timerStatus")) qs("timerStatus").textContent = "Таймер запущен";
 
     timerInterval = setInterval(runTimerTick, 1000);
+    playClickSound();
 }
 
 function runTimerTick() {
@@ -114,14 +195,8 @@ function runTimerTick() {
         if (qs("taskName")) qs("taskName").textContent = `${currentTask} завершено`;
         if (qs("timerStatus")) qs("timerStatus").textContent = "Таймер завершён";
 
+        completeTrainingByTask(currentTask);
         playFinishSound();
-        addXP(25);
-        improveStatsAfterTraining(currentTask);
-        saveTrainingHistory(currentTask, "Завершено по таймеру");
-        updateFaceitMock();
-        updateStreak();
-        checkAchievements();
-        alert(`Тренировка "${currentTask}" завершена! +25 XP`);
     }
 }
 
@@ -155,6 +230,34 @@ function stopTimer(resetText = true) {
         if (qs("taskName")) qs("taskName").textContent = "Пока ничего не запущено";
         if (qs("timerStatus")) qs("timerStatus").textContent = "Ожидание";
     }
+}
+
+function completeTrainingByTask(taskName) {
+    const lower = taskName.toLowerCase();
+
+    addXP(25);
+    updateStreak();
+    saveTrainingHistory(taskName, "Завершено по таймеру");
+
+    const activity = getActivity();
+
+    if (lower.includes("aim")) {
+        activity.aim_completed += 1;
+    } else if (
+        lower.includes("macro") ||
+        lower.includes("map") ||
+        lower.includes("smoke")
+    ) {
+        activity.macro_completed += 1;
+    } else {
+        activity.sense_completed += 1;
+    }
+
+    setActivity(activity);
+    checkAchievements();
+    saveCloudProgress();
+
+    alert(`Тренировка "${taskName}" завершена! +25 XP`);
 }
 
 /* =========================
@@ -215,11 +318,38 @@ function initMusic() {
         }
 
         updateMusicUI();
+        saveCloudProgress();
     });
 }
 
 /* =========================
-   TIPS / AI COACH BUTTON
+   THEME
+========================= */
+function setTheme(name) {
+    if (typeof themes === "undefined") return;
+    const theme = themes[name];
+    if (!theme) return;
+
+    document.documentElement.style.setProperty("--accent-main", theme.main);
+    document.documentElement.style.setProperty("--accent-dark", theme.dark);
+    document.documentElement.style.setProperty("--accent-glow", theme.glow);
+
+    localStorage.setItem(STORAGE_KEYS.theme, name);
+
+    document.querySelectorAll(".theme-btn").forEach(btn => {
+        btn.classList.toggle("theme-active", btn.dataset.theme === name);
+    });
+
+    saveCloudProgress();
+}
+
+function initTheme() {
+    const saved = localStorage.getItem(STORAGE_KEYS.theme) || "green";
+    setTheme(saved);
+}
+
+/* =========================
+   TIPS / AI
 ========================= */
 function showTip(text = null) {
     const tipEl = qs("tipText");
@@ -233,6 +363,11 @@ function showTip(text = null) {
     if (typeof coachTips !== "undefined" && coachTips.length > 0) {
         const randomIndex = Math.floor(Math.random() * coachTips.length);
         tipEl.textContent = coachTips[randomIndex];
+
+        const activity = getActivity();
+        activity.tips_used += 1;
+        setActivity(activity);
+        saveCloudProgress();
     }
 }
 
@@ -244,24 +379,23 @@ function getAICoachAdvice() {
     const aiText = qs("aiCoachText");
     if (!aiText) return;
 
-    const stats = getStats();
-    const xp = getXP();
-    const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.progressHistory) || "[]");
+    const activity = getActivity();
+    const aim = getAimPercent();
+    const macro = getMacroPercent();
+    const sense = getSensePercent();
 
     let advice = "";
 
-    if (xp < 100) {
-        advice = "Ты еще в начале пути. Сделай базу: 10 минут aim, 1 карту со смоками и 1 разбор ошибки после игры.";
-    } else if (stats.aim > stats.macro && stats.aim > stats.sense) {
-        advice = "У тебя аим уже сильнее остальных навыков. Сейчас выгоднее качать macro и game sense.";
-    } else if (stats.macro < stats.aim && stats.macro < stats.sense) {
-        advice = "Слабое место сейчас — macro. Пора больше работать над ротациями, пониманием карты и решениями по раунду.";
-    } else if (stats.sense < 60) {
-        advice = "Тебе стоит подтянуть game sense. Смотри демки, анализируй свои смерти и думай, какую инфу ты пропустил.";
-    } else if (history.length === 0) {
-        advice = "У тебя пока нет истории тренировок. Начни с Aim Routine, потом посмотри одну раскидку и сохрани первый прогресс.";
+    if (aim < macro && aim < sense) {
+        advice = "Сейчас тебе лучше прокачивать aim: сделай Aim Botz, потом Fast Aim и немного DM.";
+    } else if (macro < aim && macro < sense) {
+        advice = "Слабое место сейчас — macro. Пора учить карту, тайминги и ротации.";
+    } else if (sense < aim && sense < macro) {
+        advice = "Тебе стоит апнуть game sense: разбирай ошибки, читай игру и чаще смотри советы.";
+    } else if (activity.map_views < 3) {
+        advice = "Ты мало работаешь с картами. Посмотри полезные раскидки и закрепи их в игре.";
     } else {
-        advice = "Баланс уже неплохой. Сегодня рекомендую сделать 10 минут aim, одну тренировку macro и повторить 2 полезные раскидки.";
+        advice = "Баланс уже неплохой. Сегодня рекомендую сделать 1 aim тренировку, 1 macro тренировку и 1 разбор игры.";
     }
 
     aiText.textContent = advice;
@@ -295,6 +429,7 @@ function renderAIChat() {
             <p>${item.text}</p>
         </div>
     `).join("");
+
     chatBox.scrollTop = chatBox.scrollHeight;
 }
 
@@ -314,55 +449,39 @@ function askAITrainer() {
     setAIChatHistory(history);
     renderAIChat();
     input.value = "";
+    saveCloudProgress();
 }
 
 function generateAIAnswer(question) {
     const q = question.toLowerCase();
-    const stats = getStats();
-    const xp = getXP();
+    const aim = getAimPercent();
+    const macro = getMacroPercent();
+    const sense = getSensePercent();
 
     if (q.includes("aim")) {
-        return "Если хочешь апнуть aim, делай 10 минут Aim Botz, потом Headshot DM и следи за точностью первого выстрела.";
+        return "Для aim делай короткий, но плотный warmup: Aim Botz, Fast Aim и 10 минут DM.";
     }
 
     if (q.includes("macro") || q.includes("карта") || q.includes("ротац")) {
-        return "Для macro тебе нужно лучше читать карту: следи за таймингами, экономикой врага и не перетягивайся слишком рано.";
+        return "Macro качается через карту, тайминги и понимание экономики. Учись принимать решения раньше соперника.";
     }
 
-    if (q.includes("faceit") || q.includes("elo")) {
-        return "Для Faceit главное — стабильность. Сделай warmup, не тильтуй и после игры разбери 1-2 ошибки.";
+    if (q.includes("sense") || q.includes("гейм") || q.includes("чувств")) {
+        return "Game sense растёт, когда ты анализируешь свои смерти, понимаешь инфу и читаешь игру по таймингам.";
     }
 
-    if (q.includes("smoke") || q.includes("раскид")) {
-        return "Выучи 2-3 полезные раскидки на одной карте и сразу закрепляй их в игре, а не только на практике.";
+    if (q.includes("что качать")) {
+        if (aim <= macro && aim <= sense) return "Сейчас качай aim.";
+        if (macro <= aim && macro <= sense) return "Сейчас качай macro.";
+        return "Сейчас качай game sense.";
     }
 
-    if (q.includes("что тренировать") || q.includes("что качать")) {
-        if (stats.aim < stats.macro) {
-            return "Сейчас тебе выгоднее качать aim. Начни с 10 минут Aim Botz и 10 минут DM.";
-        }
-        return "Сейчас тебе выгоднее качать macro и game sense: тайминги, инфа, ротации, разбор своих ошибок.";
-    }
-
-    if (xp < 100) {
-        return "Ты в начале пути. Совет: базовый warmup, одна тактическая тренировка и 1 разбор своей ошибки.";
-    }
-
-    return "Норм вопрос. Мой совет: тренируй не только аим, но и мышление. Самые сильные игроки побеждают за счёт решений, а не только стрельбы.";
+    return `Сейчас твои показатели такие: Aim ${aim}%, Macro ${macro}%, Game Sense ${sense}%. Продолжай тренировки и усиливай слабую сторону.`;
 }
 
 /* =========================
    MAPS
 ========================= */
-function getMapViews() {
-    return Number(localStorage.getItem(STORAGE_KEYS.mapViews)) || 0;
-}
-
-function setMapViews(value) {
-    localStorage.setItem(STORAGE_KEYS.mapViews, value);
-    checkAchievements();
-}
-
 function showMap(key) {
     const result = qs("mapResult");
     if (!result || typeof mapConfigs === "undefined") return;
@@ -375,24 +494,23 @@ function showMap(key) {
         }
 
         result.innerHTML = html;
+
+        const activity = getActivity();
+        activity.map_views += 1;
+        setActivity(activity);
+
+        localStorage.setItem(STORAGE_KEYS.mapViews, String((Number(localStorage.getItem(STORAGE_KEYS.mapViews)) || 0) + 1));
         addXP(10);
-        setMapViews(getMapViews() + 1);
+        checkAchievements();
+        saveCloudProgress();
     } else {
         result.textContent = "Нет данных по этой раскидке";
     }
 }
 
 /* =========================
-   DAILY MISSION
+   DAILY MISSIONS
 ========================= */
-function getCompletedMissions() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.completedMissions) || "[]");
-}
-
-function setCompletedMissions(arr) {
-    localStorage.setItem(STORAGE_KEYS.completedMissions, JSON.stringify(arr));
-}
-
 function toggleMission(id, xp) {
     let completed = getCompletedMissions();
 
@@ -406,6 +524,7 @@ function toggleMission(id, xp) {
     setCompletedMissions(completed);
     renderDailyMissions();
     checkAchievements();
+    saveCloudProgress();
 }
 
 function renderDailyMissions() {
@@ -474,114 +593,61 @@ function renderSavedProgress() {
 }
 
 /* =========================
-   PROFILE
+   SKILLS
 ========================= */
-function getNickname() {
-    return localStorage.getItem(STORAGE_KEYS.nickname) || "Faceit Player";
+function clampPercent(value) {
+    return Math.max(0, Math.min(100, value));
 }
 
-function saveNickname() {
-    const input = qs("nicknameInput");
-    if (!input) return;
-    localStorage.setItem(STORAGE_KEYS.nickname, input.value.trim() || "Faceit Player");
-    renderNickname();
+function getAimPercent() {
+    const activity = getActivity();
+    return clampPercent(activity.aim_completed * 6);
 }
 
-function renderNickname() {
-    const value = getNickname();
-    if (qs("nicknameValue")) qs("nicknameValue").textContent = value;
-    if (qs("nicknameInput")) qs("nicknameInput").value = value;
+function getMacroPercent() {
+    const activity = getActivity();
+    return clampPercent(activity.macro_completed * 6 + activity.map_views * 2);
 }
 
-/* =========================
-   STATS
-========================= */
-function getStats() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.stats) || JSON.stringify(defaultStats));
+function getSensePercent() {
+    const activity = getActivity();
+    return clampPercent(activity.sense_completed * 6 + activity.tips_used * 2);
 }
 
-function setStats(stats) {
-    localStorage.setItem(STORAGE_KEYS.stats, JSON.stringify(stats));
-    renderStats();
+function updateSkillPercentages() {
+    const aim = getAimPercent();
+    const macro = getMacroPercent();
+    const sense = getSensePercent();
+
+    if (qs("aimBar")) qs("aimBar").style.width = `${aim}%`;
+    if (qs("macroBar")) qs("macroBar").style.width = `${macro}%`;
+    if (qs("senseBar")) qs("senseBar").style.width = `${sense}%`;
+
+    if (qs("aimValue")) qs("aimValue").textContent = `${aim}%`;
+    if (qs("macroValue")) qs("macroValue").textContent = `${macro}%`;
+    if (qs("senseValue")) qs("senseValue").textContent = `${sense}%`;
 }
 
-function renderStats() {
-    const stats = getStats();
+function renderPlayerAnalysis() {
+    const el = qs("playerAnalysis");
+    if (!el) return;
 
-    const bind = (name, value) => {
-        const bar = qs(`${name}Bar`);
-        const text = qs(`${name}Value`);
-        if (bar) bar.style.width = `${value}%`;
-        if (text) text.textContent = `${value}%`;
-    };
+    const aim = getAimPercent();
+    const macro = getMacroPercent();
+    const sense = getSensePercent();
 
-    bind("aim", stats.aim);
-    bind("macro", stats.macro);
-    bind("sense", stats.sense);
-}
-
-function improveStatsAfterTraining(taskName) {
-    const stats = getStats();
-
-    if (taskName.toLowerCase().includes("aim")) {
-        stats.aim = Math.min(100, stats.aim + 2);
-    } else if (taskName.toLowerCase().includes("warmup")) {
-        stats.aim = Math.min(100, stats.aim + 1);
-        stats.sense = Math.min(100, stats.sense + 1);
+    if (aim <= macro && aim <= sense) {
+        el.textContent = `Твоя слабая сторона сейчас — Aim (${aim}%). Тренируй наводку, реакцию и первый выстрел.`;
+    } else if (macro <= aim && macro <= sense) {
+        el.textContent = `Твоя слабая сторона сейчас — Macro (${macro}%). Учись ротациям, контролю карты и экономике.`;
     } else {
-        stats.macro = Math.min(100, stats.macro + 1);
-        stats.sense = Math.min(100, stats.sense + 1);
+        el.textContent = `Твоя слабая сторона сейчас — Game Sense (${sense}%). Разбирай ошибки и читай игру внимательнее.`;
     }
-
-    setStats(stats);
-}
-
-/* =========================
-   FACEIT MOCK
-========================= */
-function getFaceitData() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.faceit) || JSON.stringify({
-        elo: 840,
-        matches: 12,
-        winrate: 54,
-        kd: 1.08
-    }));
-}
-
-function setFaceitData(data) {
-    localStorage.setItem(STORAGE_KEYS.faceit, JSON.stringify(data));
-    renderFaceit();
-}
-
-function renderFaceit() {
-    const data = getFaceitData();
-    if (qs("faceitElo")) qs("faceitElo").textContent = data.elo;
-    if (qs("faceitMatches")) qs("faceitMatches").textContent = data.matches;
-    if (qs("faceitWinrate")) qs("faceitWinrate").textContent = `${data.winrate}%`;
-    if (qs("faceitKd")) qs("faceitKd").textContent = data.kd.toFixed(2);
-}
-
-function updateFaceitMock() {
-    const data = getFaceitData();
-    data.matches += 1;
-    data.elo += Math.floor(Math.random() * 16) - 3;
-    data.winrate = Math.min(100, Math.max(1, data.winrate + (Math.random() > 0.5 ? 1 : 0)));
-    data.kd = Math.min(2.5, Math.max(0.5, data.kd + 0.01));
-    setFaceitData(data);
 }
 
 /* =========================
    ACHIEVEMENTS
 ========================= */
-function getAchievements() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.achievements) || "[]");
-}
-
-function setAchievements(list) {
-    localStorage.setItem(STORAGE_KEYS.achievements, JSON.stringify(list));
-    renderAchievements();
-}
-
 function unlockAchievement(id, title) {
     const current = getAchievements();
     if (current.some(item => item.id === id)) return;
@@ -594,7 +660,7 @@ function unlockAchievement(id, title) {
 function checkAchievements() {
     const xp = getXP();
     const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.progressHistory) || "[]");
-    const mapViews = getMapViews();
+    const mapViews = Number(localStorage.getItem(STORAGE_KEYS.mapViews)) || 0;
     const streak = getStreak();
 
     if (history.length >= 1) unlockAchievement("first_training", "Первая тренировка");
@@ -674,51 +740,26 @@ function renderStreak() {
 }
 
 /* =========================
-   THEME
+   DONATE
 ========================= */
-function setTheme(name) {
-    const theme = themes[name];
-    if (!theme) return;
+function copyCard() {
+    const el = qs("kaspiCard");
+    if (!el) return;
 
-    document.documentElement.style.setProperty("--accent-main", theme.main);
-    document.documentElement.style.setProperty("--accent-dark", theme.dark);
-    document.documentElement.style.setProperty("--accent-glow", theme.glow);
-    document.documentElement.style.setProperty("--accent-soft", theme.glow.replace("0.35", "0.12"));
-    document.documentElement.style.setProperty("--accent-border", theme.glow.replace("0.35", "0.28"));
+    const text = el.textContent.trim();
 
-    localStorage.setItem(STORAGE_KEYS.theme, name);
-
-    document.querySelectorAll(".theme-btn").forEach(btn => {
-        btn.classList.toggle("theme-active", btn.dataset.theme === name);
-    });
-}
-
-function initTheme() {
-    const saved = localStorage.getItem(STORAGE_KEYS.theme) || "green";
-    setTheme(saved);
+    navigator.clipboard.writeText(text)
+        .then(() => {
+            alert("Карта скопирована 💳");
+        })
+        .catch(() => {
+            alert("Ошибка копирования");
+        });
 }
 
 /* =========================
-   START
+   AUTH / CLOUD
 ========================= */
-document.addEventListener("DOMContentLoaded", () => {
-    updateXPUI();
-    renderDailyMissions();
-    renderSavedProgress();
-    renderNickname();
-    renderStats();
-    renderFaceit();
-    renderAchievements();
-    renderStreak();
-    renderAIChat();
-    initTheme();
-    initMusic();
-    updateRank();
-});
-/* =========================
-   CLOUD ACCOUNT / SERVER SAVE
-========================= */
-
 async function apiJSON(url, options = {}) {
     const response = await fetch(url, {
         headers: { "Content-Type": "application/json" },
@@ -730,38 +771,34 @@ async function apiJSON(url, options = {}) {
 
 function collectLocalProgress() {
     return {
-        xp: Number(localStorage.getItem(STORAGE_KEYS.xp)) || 0,
-        completedMissions: JSON.parse(localStorage.getItem(STORAGE_KEYS.completedMissions) || "[]"),
-        progressHistory: JSON.parse(localStorage.getItem(STORAGE_KEYS.progressHistory) || "[]"),
-        nickname: localStorage.getItem(STORAGE_KEYS.nickname) || "Faceit Player",
-        stats: JSON.parse(localStorage.getItem(STORAGE_KEYS.stats) || JSON.stringify(defaultStats)),
-        faceit: JSON.parse(localStorage.getItem(STORAGE_KEYS.faceit) || JSON.stringify({
-            elo: 840, matches: 12, winrate: 54, kd: 1.08
-        })),
+        xp: getXP(),
+        nickname: getNickname(),
         theme: localStorage.getItem(STORAGE_KEYS.theme) || "green",
         music: localStorage.getItem(STORAGE_KEYS.music) || "off",
-        achievements: JSON.parse(localStorage.getItem(STORAGE_KEYS.achievements) || "[]"),
+        completedMissions: getCompletedMissions(),
+        progressHistory: JSON.parse(localStorage.getItem(STORAGE_KEYS.progressHistory) || "[]"),
+        achievements: getAchievements(),
         mapViews: Number(localStorage.getItem(STORAGE_KEYS.mapViews)) || 0,
-        streak: Number(localStorage.getItem(STORAGE_KEYS.streak)) || 0,
+        streak: getStreak(),
         lastTrainingDate: localStorage.getItem(STORAGE_KEYS.lastTrainingDate) || "",
-        aiChat: JSON.parse(localStorage.getItem(STORAGE_KEYS.aiChat) || "[]")
+        aiChat: getAIChatHistory(),
+        activity: getActivity()
     };
 }
 
 function applyCloudProgress(progress) {
     localStorage.setItem(STORAGE_KEYS.xp, progress.xp ?? 0);
-    localStorage.setItem(STORAGE_KEYS.completedMissions, JSON.stringify(progress.completedMissions ?? []));
-    localStorage.setItem(STORAGE_KEYS.progressHistory, JSON.stringify(progress.progressHistory ?? []));
     localStorage.setItem(STORAGE_KEYS.nickname, progress.nickname ?? "Faceit Player");
-    localStorage.setItem(STORAGE_KEYS.stats, JSON.stringify(progress.stats ?? defaultStats));
-    localStorage.setItem(STORAGE_KEYS.faceit, JSON.stringify(progress.faceit ?? { elo: 840, matches: 12, winrate: 54, kd: 1.08 }));
     localStorage.setItem(STORAGE_KEYS.theme, progress.theme ?? "green");
     localStorage.setItem(STORAGE_KEYS.music, progress.music ?? "off");
+    localStorage.setItem(STORAGE_KEYS.completedMissions, JSON.stringify(progress.completedMissions ?? []));
+    localStorage.setItem(STORAGE_KEYS.progressHistory, JSON.stringify(progress.progressHistory ?? []));
     localStorage.setItem(STORAGE_KEYS.achievements, JSON.stringify(progress.achievements ?? []));
     localStorage.setItem(STORAGE_KEYS.mapViews, progress.mapViews ?? 0);
     localStorage.setItem(STORAGE_KEYS.streak, progress.streak ?? 0);
     localStorage.setItem(STORAGE_KEYS.lastTrainingDate, progress.lastTrainingDate ?? "");
     localStorage.setItem(STORAGE_KEYS.aiChat, JSON.stringify(progress.aiChat ?? []));
+    localStorage.setItem(STORAGE_KEYS.activity, JSON.stringify(progress.activity ?? defaultActivity()));
 }
 
 async function saveCloudProgress() {
@@ -801,11 +838,11 @@ async function loadCloudProgress() {
             renderDailyMissions();
             renderSavedProgress();
             renderNickname();
-            renderStats();
-            renderFaceit();
             renderAchievements();
             renderStreak();
             renderAIChat();
+            updateSkillPercentages();
+            renderPlayerAnalysis();
             initTheme();
         }
     } catch (e) {
@@ -816,6 +853,19 @@ async function loadCloudProgress() {
 async function registerAccount() {
     const username = qs("registerUsername")?.value?.trim();
     const password = qs("registerPassword")?.value?.trim();
+
+    const usernameRegex = /^[a-zA-Z0-9_.]{3,20}$/;
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&_-]{8,}$/;
+
+    if (!usernameRegex.test(username || "")) {
+        alert("Логин: только английские буквы, цифры, _ и ., длина 3-20");
+        return;
+    }
+
+    if (!passwordRegex.test(password || "")) {
+        alert("Пароль: минимум 8 символов, хотя бы 1 буква и 1 цифра");
+        return;
+    }
 
     const data = await apiJSON("/api/register", {
         method: "POST",
@@ -856,17 +906,25 @@ async function logoutAccount() {
     window.location.reload();
 }
 
+/* =========================
+   INIT
+========================= */
+document.addEventListener("DOMContentLoaded", () => {
+    updateXPUI();
+    updateRank();
+    renderDailyMissions();
+    renderSavedProgress();
+    renderNickname();
+    renderAchievements();
+    renderStreak();
+    renderAIChat();
+    updateSkillPercentages();
+    renderPlayerAnalysis();
+    initTheme();
+    initMusic();
+    loadCloudProgress();
+});
+
 setInterval(() => {
     saveCloudProgress();
 }, 10000);
-
-document.addEventListener("DOMContentLoaded", () => {
-    loadCloudProgress();
-});
-function copyCard() {
-    const card = document.getElementById("kaspiCard").textContent.trim();
-
-    navigator.clipboard.writeText(card)
-        .then(() => alert("Карта скопирована 💳"))
-        .catch(() => alert("Ошибка копирования"));
-}
