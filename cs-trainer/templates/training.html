@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS2 Training</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header>
+    <nav class="nav">
+        <div class="logo">CS2 Academy PRO</div>
+        <ul class="nav-links">
+            <li><a href="/">Главная</a></li>
+            <li><a href="/training" class="active">Тренировки</a></li>
+            <li><a href="/maps">Карты</a></li>
+            <li><a href="/progress">Прогресс</a></li>
+            <li><a href="/auth">Аккаунт</a></li>
+        </ul>
+    </nav>
+</header>
+
+<div class="container">
+    <section class="hero fade-in">
+        <h1>🎯 CS2 Pro Training</h1>
+        <p>Выбери тренировку и запускай таймер</p>
+    </section>
+
+    <div class="grid">
+        <div class="card fade-in">
+            <h3>🎯 Aim Routine</h3>
+            <ul>
+                <li>1000 ботов Aim Botz</li>
+                <li>20 минут Deathmatch</li>
+                <li>Fast Aim</li>
+                <li>Headshot DM</li>
+            </ul>
+            <button class="btn" onclick="startTimer(600, 'Aim Botz')">Старт 10 мин</button>
+        </div>
+
+        <div class="card fade-in">
+            <h3>🧠 Macro Routine</h3>
+            <ul>
+                <li>Работа с тимой</li>
+                <li>Контроль карты</li>
+                <li>Тайминги</li>
+                <li>Экономика</li>
+            </ul>
+            <button class="btn" onclick="startTimer(420, 'Macro Training')">Старт Macro</button>
+        </div>
+
+        <div class="card fade-in">
+            <h3>🎮 Faceit Routine</h3>
+            <ul>
+                <li>2 игры Faceit</li>
+                <li>Demo анализ</li>
+                <li>Разбор ошибок</li>
+            </ul>
+            <button class="btn" onclick="startTimer(900, 'Faceit Routine')">Старт Faceit</button>
+        </div>
+
+        <div class="card fade-in">
+            <h3>💡 Подсказка</h3>
+            <p id="tipText">Тут будут советы тренера</p>
+            <button class="btn" onclick="showRandomCoachTip()">Новый совет</button>
+        </div>
+    </div>
+
+    <div class="two-column">
+        <div class="timer-box fade-in">
+            <h3>⏱️ Активная тренировка</h3>
+            <p id="taskName">Пока ничего не запущено</p>
+            <div class="timer" id="timer">00:00</div>
+            <div class="timer-controls">
+                <button class="btn" onclick="pauseTimer()">Пауза / Продолжить</button>
+                <button class="btn" onclick="stopTimer()">Стоп</button>
+            </div>
+            <p class="small-text" id="timerStatus">Ожидание</p>
+        </div>
+
+        <div class="xp-box fade-in">
+            <h3>🔥 Прокачка аккаунта</h3>
+            <div class="xp-row">
+                <div class="xp-level" data-role="levelValue">Level 1</div>
+                <div data-role="xpText">0/100 XP</div>
+            </div>
+            <div class="xp-track">
+                <div class="xp-fill" data-role="xpBar"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="two-column">
+        <div class="mission-box fade-in">
+            <h3>📋 Daily Mission</h3>
+            <div class="mission-list" id="dailyMissionList"></div>
+        </div>
+
+        <div class="streak-box fade-in">
+            <h3>🔥 Стрик тренировок</h3>
+            <div class="streak-value" id="streakValue">🔥 Стрик: 0 дн.</div>
+            <p class="small-text">Чем чаще тренируешься, тем длиннее серия.</p>
+        </div>
+    </div>
+
+    <div class="info-box fade-in">
+        <h3>🤖 AI Тренер</h3>
+        <p id="aiCoachText">Нажми кнопку, и тренер подскажет, что качать дальше.</p>
+        <button class="btn" onclick="getAICoachAdvice()">Спросить AI тренера</button>
+    </div>
+
+    <div class="chat-box fade-in">
+        <h3>💬 AI Chat Trainer</h3>
+        <div class="chat-messages" id="aiChatMessages"></div>
+        <div class="chat-input-row">
+            <input class="chat-input" id="aiChatInput" type="text" placeholder="Например: как апнуть aim?">
+            <button class="btn" onclick="askAITrainer()">Отправить</button>
+        </div>
+    </div>
+</div>
+
+<audio id="bgMusic" loop>
+    <source src="{{ url_for('static', filename='music.mp3') }}" type="audio/mpeg">
+</audio>
+<button id="musicToggle" class="music-btn">🔇 Без звука</button>
+
+<footer>CS2 Academy PRO</footer>
+
+<script src="{{ url_for('static', filename='config.js') }}"></script>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

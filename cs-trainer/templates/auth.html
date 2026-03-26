@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Авторизация</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header>
+    <nav class="nav">
+        <div class="logo">CS2 Academy PRO</div>
+        <ul class="nav-links">
+            <li><a href="/">Главная</a></li>
+            <li><a href="/training">Тренировки</a></li>
+            <li><a href="/maps">Карты</a></li>
+            <li><a href="/progress">Прогресс</a></li>
+            <li><a href="/auth" class="active">Аккаунт</a></li>
+        </ul>
+    </nav>
+</header>
+
+<div class="container">
+    <section class="hero">
+        <h1>🔐 Аккаунт</h1>
+        <p>Войди или зарегистрируйся, чтобы прогресс сохранялся на сервере</p>
+    </section>
+
+    <div class="two-column">
+        <div class="profile-box">
+            <h3>Регистрация</h3>
+            <input class="profile-input" id="registerUsername" placeholder="Логин">
+            <input class="profile-input" id="registerPassword" placeholder="Пароль" type="password">
+            <button class="btn" onclick="registerAccount()">Зарегистрироваться</button>
+        </div>
+
+        <div class="profile-box">
+            <h3>Вход</h3>
+            <input class="profile-input" id="loginUsername" placeholder="Логин">
+            <input class="profile-input" id="loginPassword" placeholder="Пароль" type="password">
+            <button class="btn" onclick="loginAccount()">Войти</button>
+            <button class="btn" onclick="logoutAccount()">Выйти</button>
+        </div>
+    </div>
+
+    <div class="info-box">
+        <h3>Статус</h3>
+        <p id="authStatus">Проверка...</p>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='config.js') }}"></script>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS2 Academy PRO</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header>
+    <nav class="nav">
+        <div class="logo">CS2 Academy PRO</div>
+        <ul class="nav-links">
+            <li><a href="/" class="active">Главная</a></li>
+            <li><a href="/training">Тренировки</a></li>
+            <li><a href="/maps">Карты</a></li>
+            <li><a href="/progress">Прогресс</a></li>
+            <li><a href="/auth">Аккаунт</a></li>
+        </ul>
+    </nav>
+</header>
+
+<div class="container">
+
+    <section class="hero fade-in">
+        <h1>🚀 CS2 Training Platform</h1>
+        <p>Прокачай свой аим, макро и игру как PRO</p>
+        <button class="btn" onclick="window.location.href='/training'">
+            Начать тренировку
+        </button>
+    </section>
+
+    <div class="two-column">
+        <div class="profile-box fade-in">
+            <h3>👤 Профиль игрока</h3>
+            <div class="profile-name" id="nicknameValue">Player</div>
+            <input class="profile-input" id="nicknameInput" placeholder="Введите ник">
+            <button class="btn" onclick="saveNickname()">Сохранить</button>
+        </div>
+
+        <div class="theme-box fade-in">
+            <h3>🎨 Тема сайта</h3>
+            <div class="theme-row">
+                <button class="theme-btn" data-theme="green" onclick="setTheme('green')">Зелёная</button>
+                <button class="theme-btn" data-theme="blue" onclick="setTheme('blue')">Синяя</button>
+                <button class="theme-btn" data-theme="red" onclick="setTheme('red')">Красная</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="two-column">
+        <div class="xp-box fade-in">
+            <h3>🔥 Уровень</h3>
+            <div class="xp-row">
+                <div class="xp-level" data-role="levelValue">Level 1</div>
+                <div data-role="xpText">0/100 XP</div>
+            </div>
+            <div class="xp-track">
+                <div class="xp-fill" data-role="xpBar"></div>
+            </div>
+            <p id="rankText">Rank: Silver</p>
+        </div>
+
+        <div class="streak-box fade-in">
+            <h3>🔥 Стрик</h3>
+            <div class="streak-value" id="streakValue">🔥 Стрик: 0 дн.</div>
+        </div>
+    </div>
+
+    <div class="three-column">
+        <div class="stats-box fade-in">
+            <h3>🎯 Aim</h3>
+            <div class="stat-row">
+                <div class="stat-head">
+                    <span>Skill</span>
+                    <span id="aimValue">0%</span>
+                </div>
+                <div class="stat-track">
+                    <div class="stat-fill" id="aimBar"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-box fade-in">
+            <h3>🧠 Macro</h3>
+            <div class="stat-row">
+                <div class="stat-head">
+                    <span>Skill</span>
+                    <span id="macroValue">0%</span>
+                </div>
+                <div class="stat-track">
+                    <div class="stat-fill" id="macroBar"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-box fade-in">
+            <h3>👀 Game Sense</h3>
+            <div class="stat-row">
+                <div class="stat-head">
+                    <span>Skill</span>
+                    <span id="senseValue">0%</span>
+                </div>
+                <div class="stat-track">
+                    <div class="stat-fill" id="senseBar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="faceit-box fade-in">
+        <h3>🎮 Mini Faceit Tracker</h3>
+        <div class="faceit-grid">
+            <div class="faceit-card">
+                <h4>ELO</h4>
+                <div class="faceit-value" id="faceitElo">840</div>
+            </div>
+            <div class="faceit-card">
+                <h4>Матчи</h4>
+                <div class="faceit-value" id="faceitMatches">12</div>
+            </div>
+            <div class="faceit-card">
+                <h4>Winrate</h4>
+                <div class="faceit-value" id="faceitWinrate">54%</div>
+            </div>
+            <div class="faceit-card">
+                <h4>K/D</h4>
+                <div class="faceit-value" id="faceitKd">1.08</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-box fade-in">
+        <h3>🤖 AI Тренер</h3>
+        <p id="aiCoachText">Нажми кнопку и получи совет от AI</p>
+        <button class="btn" onclick="getAICoachAdvice()">Получить совет</button>
+    </div>
+
+    <div class="achievements-box fade-in">
+        <h3>🏆 Достижения</h3>
+        <div class="achievements-list" id="achievementsList"></div>
+    </div>
+
+</div>
+
+<audio id="bgMusic" loop>
+    <source src="{{ url_for('static', filename='music.mp3') }}" type="audio/mpeg">
+</audio>
+<button id="musicToggle" class="music-btn">🔇 Без звука</button>
+
+<footer>CS2 Academy PRO</footer>
+
+<script src="{{ url_for('static', filename='config.js') }}"></script>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

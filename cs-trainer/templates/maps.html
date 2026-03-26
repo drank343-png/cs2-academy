@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS2 Maps</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header>
+    <nav class="nav">
+        <div class="logo">CS2 Academy PRO</div>
+        <ul class="nav-links">
+            <li><a href="/">Главная</a></li>
+            <li><a href="/training">Тренировки</a></li>
+            <li><a href="/maps" class="active">Карты</a></li>
+            <li><a href="/progress">Прогресс</a></li>
+            <li><a href="/auth">Аккаунт</a></li>
+        </ul>
+    </nav>
+</header>
+
+<div class="container">
+    <section class="hero fade-in">
+        <h1>🗺️ CS2 Тактики</h1>
+        <p>Нажимай на кнопку и смотри раскидку</p>
+    </section>
+
+    <div class="grid">
+        <div class="card fade-in">
+            <h3>Mirage</h3>
+            <ul>
+                <li>Smoke Window</li>
+                <li>Smoke Jungle</li>
+                <li>A Execute</li>
+            </ul>
+            <button class="btn" onclick="showMap('window')">Показать Window</button>
+        </div>
+
+        <div class="card fade-in">
+            <h3>Dust2</h3>
+            <ul>
+                <li>Xbox Smoke</li>
+                <li>Long Flash</li>
+                <li>Mid Control</li>
+            </ul>
+            <button class="btn" onclick="showMap('xbox')">Показать Xbox Smoke</button>
+        </div>
+
+        <div class="card fade-in">
+            <h3>Inferno</h3>
+            <ul>
+                <li>Banana Control</li>
+                <li>CT Smoke</li>
+                <li>Execute B</li>
+            </ul>
+            <button class="btn" onclick="showMap('banana')">Показать Banana</button>
+        </div>
+    </div>
+
+    <div class="info-box fade-in">
+        <h3>📌 Информация по раскидке</h3>
+        <div class="map-result" id="mapResult">Выбери раскидку, и здесь появится описание</div>
+    </div>
+
+    <div class="xp-box fade-in">
+        <h3>🔥 Прокачка аккаунта</h3>
+        <div class="xp-row">
+            <div class="xp-level" data-role="levelValue">Level 1</div>
+            <div data-role="xpText">0/100 XP</div>
+        </div>
+        <div class="xp-track">
+            <div class="xp-fill" data-role="xpBar"></div>
+        </div>
+    </div>
+</div>
+
+<audio id="bgMusic" loop>
+    <source src="{{ url_for('static', filename='music.mp3') }}" type="audio/mpeg">
+</audio>
+<button id="musicToggle" class="music-btn">🔇 Без звука</button>
+
+<footer>CS2 Academy PRO</footer>
+
+<script src="{{ url_for('static', filename='config.js') }}"></script>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

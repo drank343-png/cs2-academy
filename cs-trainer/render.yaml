@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: cs2-academy-pro
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app"
